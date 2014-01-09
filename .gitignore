@@ -1,0 +1,5 @@
+.DS_Store
+mesh-*.*.*
+nasm
+download/*
+dmg_build/Contents
