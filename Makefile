@@ -93,8 +93,6 @@ else
 	$(warning Ignoring OSX disk image target; currently supported only on OSX.)
 endif
 
-.PHONY: src.tar.gz linux.tar.gz darwin.tar.gz
-.PHONY: src.tar.xz linux.tar.xz darwin.tar.xz
 %.tar.gz: mesh-$(VERSION)-%.tar
 	gzip -c -9 $< > $<.gz
 	ls -l $<.gz
