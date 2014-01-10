@@ -34,37 +34,51 @@ mesh-$(VERSION)-%: nasm
 .PHONY: dmg
 dmg: mesh-$(VERSION).dmg ;
 ifeq ($(PLATFORM),darwin)
-dmg_build/Contents: dmg_build/Contents/MacOS/mesh dmg_build/Contents/Info.plist
-dmg_build/Contents/MacOS/mesh: mesh-$(VERSION)-darwin
-	mkdir -p dmg_build/Contents/MacOS
+dmg_build/img: dmg_build/img/Mesh.app/Contents/MacOS/mesh
+dmg_build/img: dmg_build/img/Mesh.app/Contents/Info.plist
+dmg_build/img/Mesh.app/Contents/MacOS/mesh: mesh-$(VERSION)-darwin
+	mkdir -p $(dir $@)
 	cp -f $< $@
-dmg_build/Contents/Info.plist: Info.plist
-	mkdir -p dmg_build/COntents
+dmg_build/img/Mesh.app/Contents/Info.plist: Info.plist
+	mkdir -p $(dir $@)
 	cp -f $< $@
 
-# DMG build process: copy a template.dmg file with only metadata, mount it,
-# copy our new files into it, set some attributes, unmount it, compress it.
-mesh-$(VERSION).dmg: dmg_build/Contents tmp.dmg
-	mkdir -p dmg_build/mnt
+dmg_build/icn.rsrc: png/icon.png
+	sips -i $<
+	DeRez -only icns $< > $@
+
+# DMG build process: create a tmp.dmg file, mount it, copy our new files to it,
+# set attributes, unmount it, more attributes, and finally, compress it.
+mesh-$(VERSION).dmg: dmg_build/img dmg_build/params.applescript icn.rsrc
+	-hdiutil detach -force\
+	 `hdiutil info | grep Mesh | awk '{print $$1}'`
+	rm -f dmg_build/tmp.dmg
+	az=`du -sm $< | awk '{ print $$1 }'` && dz=$$( expr $$az + 20 )\
+	 && hdiutil create -srcfolder dmg_build/img -volname "Mesh"\
+	 -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW -size $${dz}m\
+	 dmg_build/tmp.dmg
+	mkdir -p dmg_build/Mesh
 	hdiutil attach dmg_build/tmp.dmg -readwrite -noverify -noautoopen\
-	 -mountpoint dmg_build/mnt
-	cd dmg_build/Contents \
-	&& for i in * */*; do\
-	 rm -rf ../mnt/$$i;\
-	 ditto -rsrc "$$i" "../mnt/Mesh.app/Contents/$$i"; done
-	chmod -Rf go-w dmg_build/mnt &> /dev/null || true
-	bless --folder dmg_build/mnt --openfolder dmg_build/mnt # open on mount
-	SetFile -a C dmg_build/mnt                         # enable volume icon
-	bless --folder dmg_build/mnt -label "Mesh $(VERSION)" # volume label
+	 -mountpoint dmg_build/Mesh
+	mkdir -p dmg_build/Mesh/.bg
+	cp png/dmg_background.png dmg_build/Mesh/.bg/bg.png
+	cp png/volume_icons.icns dmg_build/Mesh/.VolumeIcon.icns
+	SetFile -c icnC dmg_build/Mesh/.VolumeIcon.icns
+	cd dmg_build/Mesh && ln -s /Applications ' '
+	Rez -append dmg_build/icn.rsrc -o $$'dmg_build/Mesh/Mesh.app/Icon\r'
+	SetFile -a V $$'dmg_build/Mesh/Mesh.app/Icon\r'
+	SetFile -a C dmg_build/Mesh/Mesh.app
+	osascript dmg_build/params.applescript Mesh # graphical formatting of dmg
+	chmod -Rf go-w dmg_build/Mesh &> /dev/null || true
+	bless --folder dmg_build/Mesh --openfolder dmg_build/Mesh # open on mount
+	SetFile -a C dmg_build/Mesh                         # enable volume icon
 	hdiutil detach -quiet -force\
-	 `hdiutil info | grep mnt | grep Apple_HFS | awk '{print $$1}'`
+	 `hdiutil info | grep Mesh | awk '{print $$1}'`
 	rm -f $@
 	hdiutil convert dmg_build/tmp.dmg -format UDZO -imagekey zlib-level=9 -o $@
-	-DeRez -only icns dmg_build/template.dmg > tmpicns.rsrc
-	-Rez -append tmpicns.rsrc -o $@
+	-Rez -append dmg_build/icn.rsrc -o $@
 	SetFile -a C $@
-	rm -f tmpicns.rsrc
-	rm -rf dmg_build/tmp* dmg_build/mnt
+	rm -rf dmg_build/tmp* dmg_build/Mesh
 	ls -l $@
 
 .PHONY: fresh_template
@@ -182,7 +196,7 @@ cleandl:
 	rm -rf download
 
 cleandmg:
-	rm -rf dmg_build/*.dmg dmg_build/Contents dmg_build/mnt
+	rm -rf dmg_build/*.dmg dmg_build/Contents dmg_build/Mesh
 
 cleantar:
 	rm -rf *.tar
@@ -192,4 +206,5 @@ cleanball:
 
 distclean: cleandl cleandmg cleantar cleanball
 	rm -rf nasm
+	rm -rf mesh-*.*.*
 #-------------------------------------------------------------------------------
