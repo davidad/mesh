@@ -81,27 +81,6 @@ mesh-$(VERSION).dmg: dmg_build/img dmg_build/params.applescript icn.rsrc
 	rm -rf dmg_build/tmp* dmg_build/Mesh
 	ls -l $@
 
-.PHONY: fresh_template
-fresh_template: fresh_dmg template ;
-fresh_dmg:
-	mkdir -p dmg_build/template
-	hdiutil create -fs HFSX -layout SPUD -size 40m -format UDRW -volname Mesh\
-	 -srcfolder dmg_build/template dmg_build/template.dmg
-	rmdir dmg_build/template
-	ls -l dmg_build/template.dmg
-
-.PHONY: template
-template: dmg_build/template.dmg.gz ;
-dmg_build/template.dmg.gz: template.dmg
-	gzip -c9 $< > $@
-	ls -l $@
-
-dmg_build/template.dmg:
-	cd dmg_build \
-	&& gunzip template.dmg.gz
-	ls -l $@
-
-dmg_build/tmp.dmg: template.dmg ; cp $< $@
 else
 %.dmg: ;
 	$(warning Ignoring OSX disk image target; currently supported only on OSX.)
