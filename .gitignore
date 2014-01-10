@@ -3,3 +3,4 @@ mesh-*.*.*
 nasm
 download/*
 dmg_build/Contents
+dmg_build/*.dmg
