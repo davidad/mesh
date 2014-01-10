@@ -1,10 +1,10 @@
 ## mesh
 
-**NOTE**: `mesh` is (very) pre-alpha. Everything is subject to change.
+**NOTE**: `mesh` is (very) **pre-alpha**. Everything is subject to change.
 
 ### Building
 
-All you need in order to build mesh on any supported platform is [git](http://git-scm.com/) and [GNU make](https://www.gnu.org/software/make/). Then, `make` will download [nasm](http://www.nasm.us/) 2.11 for you (assuming you have [cURL](http://curl.haxx.se), [gzip](http://www.gzip.org), and [cpio](http://en.wikipedia.org/wiki/Cpio), all of which are present in OSX and ubiquitous among Linux distributions).
+The only requirements to build mesh on any supported platform are [git](http://git-scm.com/) and [GNU make](https://www.gnu.org/software/make/). Running `make` will download [nasm](http://www.nasm.us/) 2.11 for you (assuming you have [cURL](http://curl.haxx.se), [gzip](http://www.gzip.org), and [cpio](http://en.wikipedia.org/wiki/Cpio), all of which are present in stock OSX and ubiquitous among Linux distributions).
 
     $ git clone https://github.com/davidad/mesh
     $ cd mesh
