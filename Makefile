@@ -24,8 +24,10 @@ endif
 # Default rule. Intended to build a mesh binary for the current platform.
 mesh: mesh-$(VERSION)-$(PLATFORM)
 	cp -f $< $@
+include *.dep
 mesh-$(VERSION)-%: nasm
-	touch $@
+	nasm $*.asm -o $@ -MD $*.dep
+	chmod +x $@
 #-------------------------------------------------------------------------------
 
 
@@ -171,6 +173,9 @@ nasm: download/$(NASM_DL_ARCHIVE)
 # Cleaning up.
 .PHONY: distclean cleandl cleandmg cleantar
 
+clean:
+	rm -rf mesh*
+
 cleandl:
 	rm -rf download
 
@@ -183,7 +188,6 @@ cleantar:
 cleanball:
 	rm -rf *.tar.*
 
-distclean: cleandl cleandmg cleantar cleanball
-	rm -rf nasm
-	rm -rf mesh-*.*.*
+distclean: cleandl cleandmg cleantar cleanball clean
+	rm -rf nasm *.dep
 #-------------------------------------------------------------------------------
