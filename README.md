@@ -2,6 +2,8 @@
 
 **NOTE**: `mesh` is (very) **pre-alpha**. Everything is subject to change.
 
+**For design descriptions**, please see the [docs](doc/index.md).
+
 ### Building
 
 The only requirements to build `mesh` on any supported platform are [git](http://git-scm.com/) and [GNU make](https://www.gnu.org/software/make/). Running `make` will download [nasm](http://www.nasm.us/) 2.11 for you (assuming you have [cURL](http://curl.haxx.se), [gzip](http://www.gzip.org), and [cpio](http://en.wikipedia.org/wiki/Cpio), all of which are present in stock OSX and ubiquitous among Linux distributions).
