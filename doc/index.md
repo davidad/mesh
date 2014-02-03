@@ -11,3 +11,8 @@ Atoms are the canonical byte-stream representation of byte strings. Nouns are tr
     <short_atom> := [0x82 - 0xFF](-0x80=length) <content_byte>{length}
     <noun> := <atom> | <noun> <noun> <dot>
 
+## Packets
+
+Packets sent over the wire take the form
+
+    <packet> := <context> <signature> <payload>
