@@ -13,6 +13,7 @@ VPATH = download dmg_build
 UNAME := $(shell uname)
 ifeq ($(UNAME),Darwin)
 	PLATFORM := darwin
+	# This means we are running on OSX.
 endif
 ifeq ($(UNAME),Linux)
 	PLATFORM := linux
@@ -22,10 +23,8 @@ endif
 
 #-------------------------------------------------------------------------------
 # Default rule. Intended to build a mesh binary for the current platform.
-mesh: mesh-$(VERSION)-$(PLATFORM)
-	cp -f $< $@
-mesh-$(VERSION)-%: nasm
-	touch $@
+mesh: mesh-$(VERSION)-$(PLATFORM) ; cp -f $< $@
+mesh-$(VERSION)-%: ./nasm mesh-%.asm ; $^ -o $@ -MD mesh-$*.dep
 #-------------------------------------------------------------------------------
 
 
@@ -113,7 +112,7 @@ dist-xz: src.tar.xz linux.tar.xz darwin.tar.xz ;
 NASM_DL_VERSION := 2.11
 download: ; mkdir download
 
-ifeq ($(PLATFORM),darwin)  # This means we are running on OSX.
+ifeq ($(PLATFORM),darwin)
     # local filename to save
     NASM_DL := nasm-osx.zip
 
@@ -126,7 +125,7 @@ ifeq ($(PLATFORM),darwin)  # This means we are running on OSX.
     # git hash-object
     NASM_DL_HASH := dae69c310bedc02f07501adef71795d46e8c2a18
 
-	# archive to extract binary from (distinct from NASM_DL in the case of RPM)
+    # archive to extract binary from (distinct from NASM_DL in the case of RPM)
     NASM_DL_ARCHIVE := nasm-osx.zip
 
     # binary to extract from archive
