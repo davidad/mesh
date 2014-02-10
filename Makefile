@@ -25,7 +25,7 @@ endif
 # Default rule. Intended to build a mesh binary for the current platform.
 mesh: mesh-$(VERSION)-$(PLATFORM)
 	cp -f $< $@
-include *.dep
+-include *.dep
 mesh-$(VERSION)-%: nasm
 	nasm $*.asm -o $@ -MD $*.dep
 	chmod +x $@
