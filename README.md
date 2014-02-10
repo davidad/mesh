@@ -1,6 +1,10 @@
 ## mesh
 
-**NOTE**: `mesh` is (very) **pre-alpha**. Everything is subject to change.
+**NOTE**: `mesh` is (very) pre-alpha. (**Let's be honest, it's literally just a hello world right now.**)
+
+This is the primary project that I am working on at [Hacker School](http://hackerschool.com) during the Winter 2014 batch. Expect daily updates. Everything is subject to change.
+
+**For design descriptions**, please see the [docs](doc/index.md).
 
 ### Building
 
