@@ -22,13 +22,12 @@ endif
 
 
 #-------------------------------------------------------------------------------
-FLAT_BINS = boot.bin
 # Default rule. Intended to build a mesh binary for the current platform.
-mesh.bin: $(FLAT_BINS)
-	cat $(FLAT_BINS) > $@
+mesh.bin: boot.bin
+	cat $^ > $@
 	@echo "Now run 'make q' (assumes you have qemu 1.7.0 installed) to launch MeshOS within QEMU."
 -include *.dep
-%.bin: nasm $*.asm
+%.bin: nasm %.asm
 	nasm $*.asm -o $@ -MD $*.dep
 #-------------------------------------------------------------------------------
 
@@ -37,7 +36,7 @@ mesh.bin: $(FLAT_BINS)
 # Run within QEMU
 .PHONY: q
 q: mesh.bin
-	qemu mesh.bin
+	qemu-system-x86_64 -cpu SandyBridge mesh.bin
 #-------------------------------------------------------------------------------
 
 

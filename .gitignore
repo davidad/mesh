@@ -1,4 +1,5 @@
 .DS_Store
-mesh-*.*.*
 nasm
 download/*
+*.dep
+*.bin
