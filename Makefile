@@ -7,7 +7,7 @@
 VERSION ?= 0.0.1
 
 # GNU Make will see all files in these directories as if they were top-level.
-VPATH = download dmg_build
+VPATH = download
 
 # Detect OS.
 UNAME := $(shell uname)
@@ -22,92 +22,22 @@ endif
 
 
 #-------------------------------------------------------------------------------
+FLAT_BINS = boot.bin
 # Default rule. Intended to build a mesh binary for the current platform.
-mesh: mesh-$(VERSION)-$(PLATFORM)
-	cp -f $< $@
+mesh.bin: $(FLAT_BINS)
+	cat $(FLAT_BINS) > $@
+	@echo "Now run 'make q' (assumes you have qemu 1.7.0 installed) to launch MeshOS within QEMU."
 -include *.dep
-mesh-$(VERSION)-%: nasm
+%.bin: nasm $*.asm
 	nasm $*.asm -o $@ -MD $*.dep
-	chmod +x $@
 #-------------------------------------------------------------------------------
 
 
 #-------------------------------------------------------------------------------
-# Packaging rules.
-.PHONY: dmg
-dmg: mesh-$(VERSION).dmg ;
-ifeq ($(PLATFORM),darwin)
-dmg_build/img: dmg_build/img/Mesh.app/Contents/MacOS/mesh
-dmg_build/img: dmg_build/img/Mesh.app/Contents/Info.plist
-dmg_build/img/Mesh.app/Contents/MacOS/mesh: mesh-$(VERSION)-darwin
-	mkdir -p $(dir $@)
-	cp -f $< $@
-dmg_build/img/Mesh.app/Contents/Info.plist: Info.plist
-	mkdir -p $(dir $@)
-	cp -f $< $@
-
-dmg_build/icn.rsrc: png/icon.png
-	sips -i $<
-	DeRez -only icns $< > $@
-
-# DMG build process: create a tmp.dmg file, mount it, copy our new files to it,
-# set attributes, unmount it, more attributes, and finally, compress it.
-mesh-$(VERSION).dmg: dmg_build/img dmg_build/params.applescript icn.rsrc
-	-hdiutil detach -force\
-	 `hdiutil info | grep Mesh | awk '{print $$1}'`
-	rm -f dmg_build/tmp.dmg
-	az=`du -sm $< | awk '{ print $$1 }'` && dz=$$( expr $$az + 20 )\
-	 && hdiutil create -srcfolder dmg_build/img -volname "Mesh"\
-	 -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW -size $${dz}m\
-	 dmg_build/tmp.dmg
-	mkdir -p dmg_build/Mesh
-	hdiutil attach dmg_build/tmp.dmg -readwrite -noverify -noautoopen\
-	 -mountpoint dmg_build/Mesh
-	mkdir -p dmg_build/Mesh/.bg
-	cp png/dmg_background.png dmg_build/Mesh/.bg/bg.png
-	cp png/volume_icons.icns dmg_build/Mesh/.VolumeIcon.icns
-	SetFile -c icnC dmg_build/Mesh/.VolumeIcon.icns
-	cd dmg_build/Mesh && ln -s /Applications ' '
-	Rez -append dmg_build/icn.rsrc -o $$'dmg_build/Mesh/Mesh.app/Icon\r'
-	SetFile -a V $$'dmg_build/Mesh/Mesh.app/Icon\r'
-	SetFile -a C dmg_build/Mesh/Mesh.app
-	osascript dmg_build/params.applescript Mesh # graphical formatting of dmg
-	chmod -Rf go-w dmg_build/Mesh &> /dev/null || true
-	bless --folder dmg_build/Mesh --openfolder dmg_build/Mesh # open on mount
-	SetFile -a C dmg_build/Mesh                         # enable volume icon
-	hdiutil detach -quiet -force\
-	 `hdiutil info | grep Mesh | awk '{print $$1}'`
-	rm -f $@
-	hdiutil convert dmg_build/tmp.dmg -format UDZO -imagekey zlib-level=9 -o $@
-	-Rez -append dmg_build/icn.rsrc -o $@
-	SetFile -a C $@
-	rm -rf dmg_build/tmp* dmg_build/Mesh
-	ls -l $@
-
-else
-%.dmg: ;
-	$(warning Ignoring OSX disk image target; currently supported only on OSX.)
-endif
-
-%.tar.gz: mesh-$(VERSION)-%.tar
-	gzip -c -9 $< > $<.gz
-	ls -l $<.gz
-%.tar.xz: mesh-$(VERSION)-%.tar
-	xz -c -6e $< > $<.xz
-	ls -l $<.xz
-
-mesh-$(VERSION)-src.tar: ;
-	git diff --exit-code          # make sure that git is clean
-	git diff --cached --exit-code #
-	git archive --format=tar --prefix=mesh-$(VERSION)/ -o $@ HEAD
-
-mesh-$(VERSION)-%.tar: mesh-$(VERSION)-%
-	tar -cf $@ $<
-
-.PHONY: dist dist-gz dist-xz
-dist: dist-gz dist-xz dmg ;
-dist-gz: src.tar.gz linux.tar.gz darwin.tar.gz ;
-dist-xz: src.tar.xz linux.tar.xz darwin.tar.xz ;
+# Run within QEMU
+.PHONY: q
+q: mesh.bin
+	qemu mesh.bin
 #-------------------------------------------------------------------------------
 
 
@@ -175,20 +105,11 @@ nasm: download/$(NASM_DL_ARCHIVE)
 .PHONY: distclean cleandl cleandmg cleantar
 
 clean:
-	rm -rf mesh*
+	rm -rf *.bin
 
 cleandl:
 	rm -rf download
 
-cleandmg:
-	rm -rf dmg_build/*.dmg dmg_build/Contents dmg_build/Mesh
-
-cleantar:
-	rm -rf *.tar
-
-cleanball:
-	rm -rf *.tar.*
-
-distclean: cleandl cleandmg cleantar cleanball clean
+distclean: cleandl clean
 	rm -rf nasm *.dep
 #-------------------------------------------------------------------------------

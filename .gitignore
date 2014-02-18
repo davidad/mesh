@@ -2,6 +2,3 @@
 mesh-*.*.*
 nasm
 download/*
-dmg_build/img
-dmg_build/*.dmg
-icn.rsrc

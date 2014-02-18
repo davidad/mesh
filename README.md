@@ -14,8 +14,14 @@ The only requirements to build `mesh` on any supported platform are [git](http:/
     $ cd mesh
     $ make
 
-Currently, supported platforms are OSX (10.5+) and Linux (3.10+), running on Intel CPUs (Sandy Bridge or newer) in 64-bit mode. Support for Windows is planned, as is support for Intel processors as old as Nocona/Prescott. 32-bit support is not planned.
+This will build a flat binary `mesh.bin`, which can be run with
+
+    $ qemu mesh.bin
+
+(tested using [qemu 1.7.0](http://wiki.qemu-project.org/download/qemu-1.7.0.tar.bz2))
+
+Future Makefiles will enable the creation of bootable USB volumes, and ultimately installation onto a disk partition.
 
 ### Licensing
 
-As network software, mesh is released under the [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.html). The Makefile contains code derived from the [rpm5](http://rpm5.org) project, which is licensed under the [LGPLv3](http://www.gnu.org/licenses/lgpl.html).
+As network-oriented software, mesh is released under the [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.html). The Makefile contains code derived from the [rpm5](http://rpm5.org) project, which is licensed under the [LGPLv3](http://www.gnu.org/licenses/lgpl.html).
