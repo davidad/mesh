@@ -80,28 +80,35 @@ _32_bits:
 
 bits 64
 _64_bits:
-  mov rdi, 0xb8000 ; This is the beginning of "video memory."
-  mov rdx, rdi     ; We'll save that value for later, too.
-  mov rcx, 80*25   ; This is how many characters are on the screen.
-  mov ax, 0x7400   ; Video memory uses 2 bytes per character. The high byte
-                   ; determines foreground and background colors. See also
-; http://en.wikipedia.org/wiki/List_of_8-bit_computer_hardware_palettes#CGA
-                   ; In this case, we're setting red-on-gray (MIT colors!)
-  rep stosw        ; Copies whatever is in ax to [rdi], rcx times.
+; Our first order of business is to load the next sector.
+  mov edi, 0x10000          ; This seems like a nice address.
+  mov edx, 0x1f2            ; ATA command ports start here.  
+  mov al, 1                 ; We're going to read one sector.
+  out dx, al                ; Send this argument to the command port.
+  inc edx                   ; Next port is the low bits of the logical block.
+  mov al, 1                 ; We're going to read LBA#1, the second block.
+  out dx, al
+  inc edx                   ; Next port is bits 8-15 of the logical block.
+  mov al, 0
+  out dx, al
+  inc edx                   ; Next is bits 16-23 of the logical block.
+  out dx, al
+  inc edx                   ; Then we have bits 24-27, and some mode flags.
+  mov al, 0b11100000        ; Bit 6 is particularly important, flagging LBA mode
+  out dx, al
+  inc edx                   ; Finally, we must send the command...
+  mov al, 0x20              ; 0x20, "Read with retry."
+  out dx, al
+ata_wait_loop:
+  in al, dx                 ; Get drive status
+  test al, 8                ; check readiness
+  jz ata_wait_loop
+  
+  mov rcx, 512 / 2          ; 512 bytes, read one word at a time...
+  mov rdx, 0x1f0            ;   from ports 0x1f0 and 0x1f1.
+  rep insw
 
-  mov rdi, rdx       ; Restore rdi to the beginning of video memory.
-  mov rsi, hello     ; Point rsi ("source" of string instructions) at string.
-  mov rbx, hello_end ; Put end of string in rbx for comparison purposes.
-hello_loop:
-  movsb              ; Moves a byte from [rsi] to [rdi], increments rsi and rdi.
-  inc rdi            ; Increment rdi again to skip over the color-control byte.
-  cmp rsi, rbx       ; Check if we've reached the end of the string.
-  jne hello_loop     ; If not, loop.
-  hlt                ; If so, halt.
-
-hello:
-  db "Hello, kernel!"
-hello_end:
+  jmp 0x10000
 
 ; Global descriptor table entry format
 ; See Intel 64 Software Developers' Manual, Vol. 3A, Figure 3-8

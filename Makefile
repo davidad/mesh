@@ -4,7 +4,7 @@
 
 #-------------------------------------------------------------------------------
 # Setting variables
-VERSION ?= 0.0.1
+VERSION ?= 0.0.2
 
 # GNU Make will see all files in these directories as if they were top-level.
 VPATH = download
@@ -23,7 +23,7 @@ endif
 
 #-------------------------------------------------------------------------------
 # Default rule. Intended to build a mesh binary for the current platform.
-mesh.bin: boot.bin
+mesh.bin: boot.bin stage2.bin
 	cat $^ > $@
 	@echo "Now run 'make q' (assumes you have qemu 1.7.0 installed) to launch MeshOS within QEMU."
 -include *.dep
