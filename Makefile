@@ -27,8 +27,8 @@ mesh.bin: boot.bin stage2.bin
 	cat $^ > $@
 	@echo "Now run 'make q' (assumes you have qemu 1.7.0 installed) to launch MeshOS within QEMU."
 -include *.dep
-%.bin: nasm %.asm
-	nasm $*.asm -o $@ -MD $*.dep
+%.bin: ./nasm %.asm
+	./nasm $*.asm -o $@ -MD $*.dep
 #-------------------------------------------------------------------------------
 
 
@@ -43,7 +43,6 @@ q: mesh.bin
 #-------------------------------------------------------------------------------
 # Download NASM.
 NASM_DL_VERSION := 2.11
-download: ; mkdir download
 
 ifeq ($(PLATFORM),darwin)
     # local filename to save
@@ -73,7 +72,8 @@ ifeq ($(PLATFORM),linux)
     NASM_DL_BIN := ./usr/bin/nasm
 endif
 
-download/$(NASM_DL): download
+download/$(NASM_DL):
+	mkdir -p download
 	curl "http://www.nasm.us/pub/nasm/releasebuilds/$(NASM_DL_VERSION)\
 	/$(NASM_DL_PLATFORM)/nasm-$(NASM_DL_VERSION)$(NASM_DL_EXT)" -o $@
 	test `git hash-object $@` = $(NASM_DL_HASH)
@@ -89,7 +89,7 @@ download/$(NASM_DL): download
 	@echo "Generating $@ from download/$(notdir $<)..."
 	@cd download; f=$(notdir $<); l=96; o=`expr $$l + 8`; set `od -j $$o -N 8 -t u1 $$f`; il=`expr 256 \* \( 256 \* \( 256 \* $$2 + $$3 \) + $$4 \) + $$5`; dl=`expr 256 \* \( 256 \* \( 256 \* $$6 + $$7 \) + $$8 \) + $$9`; z=`expr 8 + 16 \* $$il + $$dl`; o=`expr $$o + $$z + \( 8 - \( $$z \% 8 \) \) \% 8 + 8`; set `od -j $$o -N 8 -t u1 $$f`; il=`expr 256 \* \( 256 \* \( 256 \* $$2 + $$3 \) + $$4 \) + $$5`; dl=`expr 256 \* \( 256 \* \( 256 \* $$6 + $$7 \) + $$8 \) + $$9`; h=`expr 8 + 16 \* $$il + $$dl`; o=`expr $$o + $$h`; e="dd if=$$f ibs=$$o skip=1"; c=`($$e |file -) 2>/dev/null`; if echo $$c | grep -q gzip; then d=gunzip; elif echo $$c | grep -q bzip2; then d=bunzip2; elif echo $$c | grep -q xz; then d=unxz; elif echo $$c | grep -q cpio; then d=cat; else d=`which unlzma 2>/dev/null`; case "$$d" in /*) ;; *) d=`which lzmash 2>/dev/null`; case "$$d" in /*) d="lzmash -d -c" ;; *) d=cat ;; esac ;; esac; fi; $$e 2>/dev/null | $$d > $(notdir $@)
 
-nasm: download/$(NASM_DL_ARCHIVE)
+./nasm: download/$(NASM_DL_ARCHIVE)
 	cd download \
 	&& cpio -id --quiet $(NASM_DL_BIN) < $(NASM_DL_ARCHIVE) \
 	&& mv $(NASM_DL_BIN) ../nasm \
